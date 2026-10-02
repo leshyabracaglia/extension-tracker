@@ -33,8 +33,11 @@ listing is flagged in the dashboard and in the email.
 2. `.github/workflows/collect-stats.yml` runs daily at about 7am US Eastern. It snapshots every
    listing, saves the history (`tracker.db`) on the `stats-data` branch, and writes this week's
    email to `stats-data/digest.html` and `digest-subject.txt`.
-3. A weekly scheduled Claude session sends `digest.html` from your Gmail every Monday morning.
-   If you self-host instead, the server sends the email over SMTP (see below).
+3. Get the email every Monday in one of two ways (pick one, or you'll get two emails):
+   - **SMTP from the workflow:** add repository secrets `SMTP_URL` and `DIGEST_TO` (and
+     optionally `DIGEST_FROM`). On Mondays the workflow then sends the digest itself.
+   - **Claude routine:** a weekly scheduled Claude session sends `digest.html` from your Gmail.
+     The routine needs the Gmail connector attached.
 
 Run the workflow by hand from the Actions tab ("Collect stats" → Run workflow) to check that
 every store returns numbers. To browse the history in the dashboard, download `tracker.db` from

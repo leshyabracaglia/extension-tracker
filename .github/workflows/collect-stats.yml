@@ -7,6 +7,11 @@ on:
   schedule:
     - cron: '17 11 * * *' # daily, ~7am US Eastern
   workflow_dispatch:
+    inputs:
+      send_email:
+        description: Also send the digest email now (needs the SMTP_URL secret)
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -20,6 +25,11 @@ env:
 jobs:
   collect:
     runs-on: ubuntu-latest
+    env:
+      SMTP_URL: ${{ secrets.SMTP_URL }}
+      DIGEST_TO: ${{ secrets.DIGEST_TO }}
+      DIGEST_FROM: ${{ secrets.DIGEST_FROM || 'Extension Tracker <noreply@example.com>' }}
+      APP_URL: https://github.com/${{ github.repository }}
     steps:
       - uses: actions/checkout@v4
 
@@ -50,6 +60,17 @@ jobs:
 
       - name: Render weekly digest
         run: npx tsx server/cli.ts digest --preview --out stats
+
+      # Optional: email the digest yourself over SMTP every Monday. Add repository secrets
+      # SMTP_URL (e.g. smtps://you%40gmail.com:APP_PASSWORD@smtp.gmail.com:465) and DIGEST_TO.
+      - name: Email weekly digest
+        if: env.SMTP_URL != '' && (github.event_name == 'schedule' || inputs.send_email)
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] || [ "$(date +%u)" = "1" ]; then
+            npm run digest
+          else
+            echo "Not Monday; skipping email."
+          fi
 
       - name: Save history
         working-directory: stats
