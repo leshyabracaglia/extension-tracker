@@ -4,19 +4,28 @@ import { openDb } from './db.ts';
 import { addDays, today } from './dates.ts';
 import type { DB } from './db.ts';
 import { buildDigest, sendDigest } from './digest.ts';
+import { syncFromFile } from './sync.ts';
 import type { Store } from './stores/types.ts';
 
 const [cmd, ...flags] = process.argv.slice(2);
 const db = openDb();
 
 if (cmd === 'fetch') {
+  for (const line of syncFromFile(db)) console.log(line);
   const results = await collectAll(db);
   for (const r of results) console.log(`listing ${r.listingId}: ${r.ok ? 'ok' : r.error}`);
 } else if (cmd === 'digest' && flags.includes('--preview')) {
+  // --out DIR writes digest.html + digest-subject.txt (used by the GitHub Action).
+  const outDir = flags.includes('--out') ? flags[flags.indexOf('--out') + 1] : null;
   const { subject, html } = buildDigest(db);
-  fs.mkdirSync('data', { recursive: true });
-  fs.writeFileSync('data/digest-preview.html', html);
-  console.log(`Subject: ${subject}\nWrote data/digest-preview.html`);
+  fs.mkdirSync(outDir ?? 'data', { recursive: true });
+  if (outDir) {
+    fs.writeFileSync(`${outDir}/digest.html`, html);
+    fs.writeFileSync(`${outDir}/digest-subject.txt`, subject);
+  } else {
+    fs.writeFileSync('data/digest-preview.html', html);
+  }
+  console.log(`Subject: ${subject}\nWrote ${outDir ? `${outDir}/digest.html` : 'data/digest-preview.html'}`);
 } else if (cmd === 'digest') {
   const { subject, to } = await sendDigest(db);
   console.log(`Sent "${subject}" to ${to.join(', ')}`);
@@ -28,6 +37,9 @@ if (cmd === 'fetch') {
   console.log('Usage: tsx server/cli.ts fetch | digest [--preview] | demo');
   process.exitCode = 1;
 }
+
+// Closing checkpoints SQLite's write-ahead log into the main file, so the .db file alone is complete.
+db.raw.close();
 
 /** Fills an empty database with made-up history so you can see the dashboard before real data accumulates. */
 function seedDemo(db: DB) {

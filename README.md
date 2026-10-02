@@ -26,7 +26,21 @@ history starts the day you add a listing. A listing added mid-week doesn't count
 that week's comparison. If a fetch fails, the last known value is carried forward and the
 listing is flagged in the dashboard and in the email.
 
-## Running it
+## Running it with GitHub Actions (no server)
+
+1. List your extensions in `extensions.json` (see `extensions.example.json`). Each store
+   accepts a store URL or an ID.
+2. `.github/workflows/collect-stats.yml` runs daily at about 7am US Eastern. It snapshots every
+   listing, saves the history (`tracker.db`) on the `stats-data` branch, and writes this week's
+   email to `stats-data/digest.html` and `digest-subject.txt`.
+3. A weekly scheduled Claude session sends `digest.html` from your Gmail every Monday morning.
+   If you self-host instead, the server sends the email over SMTP (see below).
+
+Run the workflow by hand from the Actions tab ("Collect stats" → Run workflow) to check that
+every store returns numbers. To browse the history in the dashboard, download `tracker.db` from
+the `stats-data` branch and point `DATABASE_PATH` at it.
+
+## Running it as a server
 
 Requires Node 22.13+. The database is Node's built-in SQLite, so there's nothing native to compile.
 

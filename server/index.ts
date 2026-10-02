@@ -4,8 +4,10 @@ import { collectAll } from './collect.ts';
 import { config } from './config.ts';
 import { openDb } from './db.ts';
 import { sendDigest } from './digest.ts';
+import { syncFromFile } from './sync.ts';
 
 const db = openDb();
+for (const line of syncFromFile(db)) console.log(`[config] ${line}`);
 
 async function runCollect() {
   const results = await collectAll(db);

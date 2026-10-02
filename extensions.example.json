@@ -1,0 +1,13 @@
+{
+  "extensions": [
+    {
+      "name": "My Extension",
+      "listings": {
+        "chrome": "https://chromewebstore.google.com/detail/my-extension/abcdefghijklmnopabcdefghijklmnop",
+        "firefox": "my-extension",
+        "edge": "abcdefghijklmnopabcdefghijklmnop",
+        "safari": "https://apps.apple.com/us/app/my-extension/id1234567890"
+      }
+    }
+  ]
+}
